@@ -1,0 +1,7 @@
+*.pyc
+env/
+.vscode/tags
+result*
+figures*
+.*DS_Store
+*.npz
