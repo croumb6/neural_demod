@@ -11,7 +11,7 @@ def graph_confusion_matrix(cm, save_name, title='Confusion Matrix'):
         tmp_arr = []
         a = sum(i, 0)
         for j in i:
-            tmp_arr.append(float(j)/float(a))
+            tmp_arr.append(float(j)/float(a+1e-10))
         norm_conf.append(tmp_arr)
 
     fig = plt.figure(figsize=(16,16))
