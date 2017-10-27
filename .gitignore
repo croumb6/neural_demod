@@ -5,3 +5,7 @@ result*
 figures*
 .*DS_Store
 *.npz
+
+demod/result*
+demod/symbol*
+data_gen/data/*.npy

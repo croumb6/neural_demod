@@ -1,12 +1,15 @@
 import numpy as np
 import os, sys
 import argparse
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 import chainer
 import chainer.functions as F
 import chainer.links as L
 from chainer import training
-from common.dataset import DemodDataset
+from common.dataset import DemodDataset, DemodSNRDataset
 from chainer.training import extensions
 from chainer import serializers
 from sklearn import metrics
@@ -35,6 +38,8 @@ parser.add_argument('--num_syms', '-n', type=int, default=3,
                     help='Number of symbols to demod at a Time')
 parser.add_argument('--model_type', '-t', type=str, default="AlexStock",
                     help='Which Model to run (AlexStock, ComplexNN)')
+parser.add_argument('--snr', '-s', type=int, default=18,
+                    help='SNR to use for demodulation training')
 args = parser.parse_args()
 
 
@@ -44,10 +49,18 @@ if not os.path.exists(results_output_dir):
     os.makedirs(results_output_dir)
 record_setting(results_output_dir)
 
-snr = 10 
+snr = range(-10,-4,2)  + range(14,20,2)
+snr = [-8,18] #+ range(14,20,2)
+snr = range(-6,0,2) + range(14,20,2)
+snr = [-6]
+snr = range(-10,20,2)
+# snr = [-8,-4, 18]
+# snr = range(14,20,2)
+print snr
+snr = [18]
 num_syms = args.num_syms 
-data_train = DemodDataset(test=False, snr=snr, num_syms=num_syms)
-data_test = DemodDataset(test=True, snr=snr, num_syms=num_syms)
+data_train = DemodSNRDataset(test=False, snr=snr, num_syms=num_syms)
+data_test = DemodSNRDataset(test=True, snr=snr, num_syms=num_syms)
 num_classes = np.unique(data_train.ys).shape[0] 
 
 
@@ -86,6 +99,7 @@ serializers.save_npz(os.path.join(results_output_dir, 'main_classifer_model.npz'
 x, y = data_test.xs, data_test.ys
 xp = np if args.gpu < 0 else cupy
 
+
 pred_ys = xp.zeros(y.shape)
 
 
@@ -111,6 +125,52 @@ if num_syms < 4:
 cor = np.sum(np.diag(cm))
 ncor = np.sum(cm) - cor
 print "Overall Accuracy: ", cor / float(cor+ncor)
+assert False
 
+pred_ys = {}
+real_ys = {}
+snr_labels = data_test.snr_labels
+for snr in np.unique(snr_labels):
+    pred_ys[snr] = []
+    real_ys[snr] = []
 
+chainer.config.train = False
+
+for i in range(0, len(x), args.batchsize):
+    x_batch = xp.array(x[i:i + args.batchsize])
+    y_batch = xp.array(y[i:i + args.batchsize])
+    y_pred = model.predictor(x_batch)
+    acc = model.accfun(y_pred, y_batch)
+    acc = chainer.cuda.to_cpu(acc.data)
+    for snr in np.unique(snr_labels):
+        idx = xp.where(snr_labels[i:i + args.batchsize] == snr)[0]
+        if idx.shape[0] > 0:
+            pred_ys[snr] += np.argmax(y_pred[idx]._data[0], axis=1).tolist() 
+            real_ys[snr] += y_batch[idx].tolist() 
+    # print "Accuracy: ", acc
+    # pred_ys[i:i + args.batchsize] = np.argmax(y_pred._data[0], axis=1)
+chainer.config.train = True
+
+acc_l = []
+for snr in np.unique(snr_labels):
+    preds = np.array(pred_ys[snr])
+    print "Test Size: %d" % (preds.shape[0])
+    ys = np.array(real_ys[snr])
+    cm = metrics.confusion_matrix(ys, preds)
+    if args.num_syms < 4:
+        graph_confusion_matrix(cm, os.path.join(results_output_dir, "confusion_%d.png" % (snr)))
+    cor = np.sum(np.diag(cm))
+    ncor = np.sum(cm) - cor
+    print "SNR: %ddB Accuracy: " % (snr), cor / float(cor+ncor)
+    acc_l.append( cor / float(cor+ncor) )
+
+plt.figure()
+plt.plot(np.unique(snr_labels), acc_l, '-x')
+plt.xlabel('SNR (dB)')
+plt.ylabel('1 - Symbol Error Rate')
+plt.tight_layout()
+plt.savefig(os.path.join(results_output_dir, 'snr_acc.png'))
+plt.close()
+
+plt.close('all')
 

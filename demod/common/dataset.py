@@ -3,9 +3,80 @@ sys.path.append(os.path.dirname(__file__))
 
 import numpy as np
 from PIL import Image
+import cPickle
 import chainer
 from chainer.dataset import dataset_mixin
 from load_models import download_file
+
+
+class DemodSNRDataset(dataset_mixin.DatasetMixin):
+    def __init__(self, test=False, snr=[18], num_syms=4):
+
+        xs_complex_l = []
+        ys_l = []
+
+        data_size = 3000 
+        ntaps = 4
+
+        for s in snr:
+            # data = np.load("../data_gen/data/newchan_QPSK_%d.npz" % (s))
+            # data = np.load("../data_gen/data/nooverlapQPSK_%d.npz" % (s))
+            # data = np.load("../data_gen/data/4taps_standQPSK_%d.npz" % (s))
+            data = np.load("../data_gen/data/newSim_QPSK_%d.npz" % (s))
+            xs_complex = data['x']
+            # xs_complex = xs_complex/np.sum((np.abs(xs_complex)), axis=1)[:,np.newaxis]
+            # xs_complex = (xs_complex - np.min(xs_complex))/(np.max(xs_complex) - np.min(xs_complex))
+            xs_complex_l.append(xs_complex[:data_size,:ntaps*num_syms])
+            ys_l.append(data['y'][:data_size,:num_syms])
+
+
+        xs_complex = np.vstack((xs_complex_l))
+        ys = np.vstack((ys_l))
+        self.snr_labels = np.repeat(np.array(snr), data_size)
+
+        # normalize
+        # xs_complex = (xs_complex - np.min(xs_complex))/(np.max(xs_complex) - np.min(xs_complex))
+
+        self.xs = np.dstack((np.real(xs_complex),np.imag(xs_complex))).transpose(0,2,1)
+        # self.xs = (self.xs - np.mean(self.xs, axis=2)[:,:,np.newaxis])/np.std(self.xs, axis=2)[:,:,np.newaxis]
+
+        self.xs = self.xs.reshape(self.xs.shape[0], 1, self.xs.shape[1], self.xs.shape[2])
+
+        #ys = data['y'][:data_size,:num_syms]
+        keys = np.unique(ys[:,:num_syms], axis=0)
+        sym_l = np.zeros(ys.shape[0])
+        for i, k in enumerate(keys):
+            sym_l[np.where((ys == k).all(axis=1))] = i
+        self.ys = sym_l
+        print "num classes: %d" % (np.unique(self.ys).shape)
+
+        np.random.seed(8)
+        train_size = .6
+        idx = np.random.permutation(self.xs.shape[0])
+        self.xs = self.xs[idx]
+        self.ys = self.ys[idx]
+        self.snr_labels = self.snr_labels[idx]
+        if test:
+            self.xs = self.xs[int(self.xs.shape[0]*train_size):]
+            self.ys = self.ys[int(self.ys.shape[0]*train_size):]
+            self.snr_labels = self.snr_labels[int(self.snr_labels.shape[0]*train_size):]
+        else:
+            self.xs = self.xs[:int(self.xs.shape[0]*train_size)]
+            self.ys = self.ys[:int(self.ys.shape[0]*train_size)]
+            self.snr_labels = self.snr_labels[:int(self.snr_labels.shape[0]*train_size)]
+        print("load gnu-radio - demo.  shape: ", self.xs.shape)
+        np.random.seed()
+        assert self.ys.shape[0] == self.xs.shape[0], "xs and ys don't match!"
+        self.xs = self.xs.astype('float32')
+        self.ys = self.ys.astype('int32')
+        self.snr_labels = self.snr_labels.astype('int32')
+
+    
+    def __len__(self):
+        return self.xs.shape[0]
+
+    def get_example(self, i):
+        return self.xs[i], self.ys[i]
 
 
 
@@ -13,7 +84,7 @@ class DemodDataset(dataset_mixin.DatasetMixin):
     def __init__(self, test=False, snr=18, num_syms=4):
 
         ntaps = 8
-        xs_complex = np.load('data/qpsk_snr%d_iq_128.npy' %(snr))
+        xs_complex = np.load('../data_gen/data/qpsk_snr%d_iq_128.npy' %(snr))
 
         # hack to deal with clock shift - bad labels
         data_size = 5000
@@ -25,7 +96,7 @@ class DemodDataset(dataset_mixin.DatasetMixin):
         self.xs = np.dstack((np.real(xs_complex),np.imag(xs_complex))).transpose(0,2,1)
         self.xs = self.xs.reshape(self.xs.shape[0], 1, self.xs.shape[1], self.xs.shape[2])
 
-        ys = np.load('data/qpsk_snr%d_syms_16.npy' %(snr))[:data_size,:num_syms]
+        ys = np.load('../data_gen/data/qpsk_snr%d_syms_16.npy' %(snr))[:data_size,:num_syms]
         keys = np.unique(ys[:,:num_syms], axis=0)
         sym_l = np.zeros(ys.shape[0])
         for i, k in enumerate(keys):
