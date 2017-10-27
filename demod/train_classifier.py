@@ -49,15 +49,8 @@ if not os.path.exists(results_output_dir):
     os.makedirs(results_output_dir)
 record_setting(results_output_dir)
 
-snr = range(-10,-4,2)  + range(14,20,2)
-snr = [-8,18] #+ range(14,20,2)
-snr = range(-6,0,2) + range(14,20,2)
-snr = [-6]
-snr = range(-10,20,2)
-# snr = [-8,-4, 18]
-# snr = range(14,20,2)
+snr = range(-10,20, 2)  
 print snr
-snr = [18]
 num_syms = args.num_syms 
 data_train = DemodSNRDataset(test=False, snr=snr, num_syms=num_syms)
 data_test = DemodSNRDataset(test=True, snr=snr, num_syms=num_syms)
@@ -125,7 +118,6 @@ if num_syms < 4:
 cor = np.sum(np.diag(cm))
 ncor = np.sum(cm) - cor
 print "Overall Accuracy: ", cor / float(cor+ncor)
-assert False
 
 pred_ys = {}
 real_ys = {}
