@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Mpsk Stage6
-# Generated: Fri Oct 20 09:48:58 2017
+# Generated: Thu Oct 26 15:24:54 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -26,6 +26,7 @@ from gnuradio import qtgui
 from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
 from gnuradio.qtgui import Range, RangeWidget
+from grc_gnuradio import blks2 as grc_blks2
 from optparse import OptionParser
 import numpy
 import sip
@@ -66,18 +67,23 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
         ##################################################
         self.sps = sps = 4
         self.nfilts = nfilts = 32
+        self.variable_0 = variable_0 = 0
         self.timing_loop_bw = timing_loop_bw = 6.28/100.0
         self.time_offset = time_offset = 1.00
         self.taps = taps = [1.0, 0.25-0.25j, 0.50 + 0.10j, -0.3 + 0.2j]
+        # ntaps = 3
+        # taps = numpy.random.random(ntaps-1) + 1j*numpy.random.random(ntaps-1)
+        # self.taps = taps = numpy.concatenate((numpy.ones(1), taps))
+        # self.taps = taps
         self.samp_rate = samp_rate = 32000
         self.rrc_taps = rrc_taps = firdes.root_raised_cosine(nfilts, nfilts, 1.0/float(sps), 0.35, 11*sps*nfilts)
         self.qpsk = qpsk = digital.constellation_rect(([0.707+0.707j, -0.707+0.707j, -0.707-0.707j, 0.707-0.707j]), ([0, 1, 2, 3]), 4, 2, 2, 1, 1).base()
         self.phase_bw = phase_bw = 6.28/100.0
-        self.noise_volt = noise_volt = 0.0001
+        self.noise_volt = noise_volt = 0
         self.freq_offset = freq_offset = 0
         self.excess_bw = excess_bw = 0.35
         self.eq_gain = eq_gain = 0.01
-        self.delay = delay = 0
+        self.delay = delay = 58
         self.arity = arity = 4
 
         ##################################################
@@ -116,7 +122,7 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
         self._phase_bw_range = Range(0.0, 1.0, 0.01, 6.28/100.0, 200)
         self._phase_bw_win = RangeWidget(self._phase_bw_range, self.set_phase_bw, 'Phase: Bandwidth', "slider", float)
         self.controls_grid_layout_1.addWidget(self._phase_bw_win,  0,2,1,1)
-        self._noise_volt_range = Range(0, 1, 0.01, 0.0001, 200)
+        self._noise_volt_range = Range(0, 1, 0.01, 0, 200)
         self._noise_volt_win = RangeWidget(self._noise_volt_range, self.set_noise_volt, 'Noise Voltage', "counter_slider", float)
         self.controls_grid_layout_0.addWidget(self._noise_volt_win,  0,0,1,1)
         self._freq_offset_range = Range(-0.1, 0.1, 0.001, 0, 200)
@@ -125,12 +131,62 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
         self._eq_gain_range = Range(0.0, 0.1, 0.001, 0.01, 200)
         self._eq_gain_win = RangeWidget(self._eq_gain_range, self.set_eq_gain, 'Equalizer: rate', "slider", float)
         self.controls_grid_layout_1.addWidget(self._eq_gain_win,  0,1,1,1)
-        self._delay_range = Range(0, 200, 1, 0, 200)
+        self._delay_range = Range(0, 200, 1, 58, 200)
         self._delay_win = RangeWidget(self._delay_range, self.set_delay, 'Delay', "counter_slider", float)
         self.top_grid_layout.addWidget(self._delay_win, 1,0,1,1)
         self.tutorial_my_qpsk_demod_cb_1 = tutorial.my_qpsk_demod_cb(True)
+        self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
+        	1024, #size
+        	samp_rate, #samp_rate
+        	"", #name
+        	1 #number of inputs
+        )
+        self.qtgui_time_sink_x_1.set_update_time(0.10)
+        self.qtgui_time_sink_x_1.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_1.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_1.enable_tags(-1, True)
+        self.qtgui_time_sink_x_1.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_1.enable_autoscale(True)
+        self.qtgui_time_sink_x_1.enable_grid(False)
+        self.qtgui_time_sink_x_1.enable_axis_labels(True)
+        self.qtgui_time_sink_x_1.enable_control_panel(False)
+
+        if not True:
+          self.qtgui_time_sink_x_1.disable_legend()
+
+        labels = ['', '', '', '', '',
+                  '', '', '', '', '']
+        widths = [1, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        colors = ["blue", "red", "green", "black", "cyan",
+                  "magenta", "yellow", "dark red", "dark green", "blue"]
+        styles = [1, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+                   -1, -1, -1, -1, -1]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+
+        for i in xrange(2):
+            if len(labels[i]) == 0:
+                if(i % 2 == 0):
+                    self.qtgui_time_sink_x_1.set_line_label(i, "Re{{Data {0}}}".format(i/2))
+                else:
+                    self.qtgui_time_sink_x_1.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+            else:
+                self.qtgui_time_sink_x_1.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_1.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_1.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_1.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_1.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_1.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_time_sink_x_1_win, 4,0,1,1)
         self.qtgui_time_sink_x_0_0 = qtgui.time_sink_f(
-        	500, #size
+        	100, #size
         	samp_rate, #samp_rate
         	'', #name
         	2 #number of inputs
@@ -223,6 +279,37 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.pyqwidget(), Qt.QWidget)
         self.received_grid_layout_1.addWidget(self._qtgui_time_sink_x_0_win,  0,0,1,1)
+        self.qtgui_number_sink_0 = qtgui.number_sink(
+            gr.sizeof_float,
+            0,
+            qtgui.NUM_GRAPH_NONE,
+            1
+        )
+        self.qtgui_number_sink_0.set_update_time(0.10)
+        self.qtgui_number_sink_0.set_title("")
+
+        labels = ['BER', '', '', '', '',
+                  '', '', '', '', '']
+        units = ['', '', '', '', '',
+                 '', '', '', '', '']
+        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
+                  ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
+        factor = [1e6, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        for i in xrange(1):
+            self.qtgui_number_sink_0.set_min(i, 0)
+            self.qtgui_number_sink_0.set_max(i, 1)
+            self.qtgui_number_sink_0.set_color(i, colors[i][0], colors[i][1])
+            if len(labels[i]) == 0:
+                self.qtgui_number_sink_0.set_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_number_sink_0.set_label(i, labels[i])
+            self.qtgui_number_sink_0.set_unit(i, units[i])
+            self.qtgui_number_sink_0.set_factor(i, factor[i])
+
+        self.qtgui_number_sink_0.enable_autoscale(True)
+        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_number_sink_0_win, 3,0,1,1)
         self.qtgui_const_sink_x_0 = qtgui.const_sink_c(
         	1024, #size
         	"", #name
@@ -264,13 +351,13 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
 
         self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.pyqwidget(), Qt.QWidget)
         self.received_grid_layout_0.addWidget(self._qtgui_const_sink_x_0_win,  0,0,1,1)
+        self.iq_vector_sink = blocks.vector_sink_c(1)
         self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, timing_loop_bw, (rrc_taps), nfilts, nfilts/2, 1.5, 2)
         self.digital_map_bb_0 = digital.map_bb(([0,1,3,2]))
-        self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(4)
         self.digital_costas_loop_cc_0 = digital.costas_loop_cc(phase_bw, arity, False)
         self.digital_constellation_modulator_0 = digital.generic_mod(
           constellation=qpsk,
-          differential=True,
+          differential=False,
           samples_per_symbol=sps,
           pre_diff_code=True,
           excess_bw=excess_bw,
@@ -278,8 +365,10 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
           log=False,
           )
         self.digital_cma_equalizer_cc_0 = digital.cma_equalizer_cc(15, 1, eq_gain, 2)
+        snr = 18
+        noise_amp = 10**(-snr/10.0)
         self.channels_channel_model_0 = channels.channel_model(
-        	noise_voltage=noise_volt,
+        	noise_voltage=noise_amp,
         	frequency_offset=freq_offset,
         	epsilon=time_offset,
         	taps=(taps),
@@ -289,10 +378,24 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
         self.blocks_unpack_k_bits_bb_0_0 = blocks.unpack_k_bits_bb(8)
         self.blocks_unpack_k_bits_bb_0 = blocks.unpack_k_bits_bb(2)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
+        self.blocks_file_sink_0_1 = blocks.file_sink(gr.sizeof_gr_complex*1, 'iq_qpsk.txt', False)
+        self.blocks_file_sink_0_1.set_unbuffered(True)
+        self.blocks_file_sink_0_0_0 = blocks.file_sink(gr.sizeof_float*1, 'decoded_qpsk.txt', False)
+        self.blocks_file_sink_0_0_0.set_unbuffered(False)
+        self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, 'ground_truth_qpsk.txt', False)
+        self.blocks_file_sink_0_0.set_unbuffered(False)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, 'ber_qpsk.txt', False)
+        self.blocks_file_sink_0.set_unbuffered(True)
+        self.blocks_delay_0_1 = blocks.delay(gr.sizeof_char*1, int(delay))
         self.blocks_delay_0 = blocks.delay(gr.sizeof_float*1, int(delay))
         self.blocks_char_to_float_0_0_0 = blocks.char_to_float(1, 1)
         self.blocks_char_to_float_0_0 = blocks.char_to_float(1, 1)
         self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
+        self.blks2_error_rate = grc_blks2.error_rate(
+        	type='BER',
+        	win_size=int(1e4),
+        	bits_per_symbol=1,
+        )
         self.analog_random_source_x_0 = blocks.vector_source_b(map(int, numpy.random.randint(0, 256, 1000)), True)
 
 
@@ -302,20 +405,29 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
         ##################################################
         self.connect((self.analog_random_source_x_0, 0), (self.blocks_unpack_k_bits_bb_0_0, 0))
         self.connect((self.analog_random_source_x_0, 0), (self.digital_constellation_modulator_0, 0))
+        self.connect((self.blks2_error_rate, 0), (self.blocks_file_sink_0, 0))
+        self.connect((self.blks2_error_rate, 0), (self.qtgui_number_sink_0, 0))
         self.connect((self.blocks_char_to_float_0, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.blocks_char_to_float_0_0, 0), (self.blocks_file_sink_0_0_0, 0))
         self.connect((self.blocks_char_to_float_0_0, 0), (self.qtgui_time_sink_x_0_0, 0))
         self.connect((self.blocks_char_to_float_0_0_0, 0), (self.blocks_delay_0, 0))
+        self.connect((self.blocks_delay_0, 0), (self.blocks_file_sink_0_0, 0))
         self.connect((self.blocks_delay_0, 0), (self.qtgui_time_sink_x_0_0, 1))
+        self.connect((self.blocks_delay_0_1, 0), (self.blks2_error_rate, 1))
         self.connect((self.blocks_throttle_0, 0), (self.channels_channel_model_0, 0))
+        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blks2_error_rate, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blocks_char_to_float_0_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0_0, 0), (self.blocks_char_to_float_0_0_0, 0))
+        self.connect((self.blocks_unpack_k_bits_bb_0_0, 0), (self.blocks_delay_0_1, 0))
         self.connect((self.channels_channel_model_0, 0), (self.digital_pfb_clock_sync_xxx_0, 0))
+        self.connect((self.channels_channel_model_0, 0), (self.iq_vector_sink, 0))
+        self.connect((self.channels_channel_model_0, 0), (self.qtgui_time_sink_x_1, 0))
         self.connect((self.digital_cma_equalizer_cc_0, 0), (self.digital_costas_loop_cc_0, 0))
+        self.connect((self.digital_constellation_modulator_0, 0), (self.blocks_file_sink_0_1, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_const_sink_x_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.tutorial_my_qpsk_demod_cb_1, 0))
-        self.connect((self.digital_diff_decoder_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
-        self.connect((self.digital_map_bb_0, 0), (self.digital_diff_decoder_bb_0, 0))
+        self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_cma_equalizer_cc_0, 0))
         self.connect((self.tutorial_my_qpsk_demod_cb_1, 0), (self.blocks_char_to_float_0, 0))
         self.connect((self.tutorial_my_qpsk_demod_cb_1, 0), (self.digital_map_bb_0, 0))
@@ -338,6 +450,12 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
     def set_nfilts(self, nfilts):
         self.nfilts = nfilts
         self.set_rrc_taps(firdes.root_raised_cosine(self.nfilts, self.nfilts, 1.0/float(self.sps), 0.35, 11*self.sps*self.nfilts))
+
+    def get_variable_0(self):
+        return self.variable_0
+
+    def set_variable_0(self, variable_0):
+        self.variable_0 = variable_0
 
     def get_timing_loop_bw(self):
         return self.timing_loop_bw
@@ -365,6 +483,7 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_0_0.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
         self.blocks_throttle_0.set_sample_rate(self.samp_rate)
@@ -421,6 +540,7 @@ class mpsk_stage6(gr.top_block, Qt.QWidget):
 
     def set_delay(self, delay):
         self.delay = delay
+        self.blocks_delay_0_1.set_dly(int(self.delay))
         self.blocks_delay_0.set_dly(int(self.delay))
 
     def get_arity(self):
@@ -441,10 +561,13 @@ def main(top_block_cls=mpsk_stage6, options=None):
     tb = top_block_cls()
     tb.start()
     tb.show()
+    
 
     def quitting():
         tb.stop()
         tb.wait()
+        data = tb.iq_vector_sink.data()
+        numpy.savez_compressed('iq_data.npz', iq=data)
     qapp.connect(qapp, Qt.SIGNAL("aboutToQuit()"), quitting)
     qapp.exec_()
 
