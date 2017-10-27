@@ -32,6 +32,7 @@ import sys
 import tutorial
 from gnuradio import qtgui
 from time import sleep
+import argparse
 
 
 class mpsk_stage6(gr.top_block):
@@ -98,14 +99,14 @@ class mpsk_stage6(gr.top_block):
         self.blocks_unpack_k_bits_bb_0_0 = blocks.unpack_k_bits_bb(8)
         self.blocks_unpack_k_bits_bb_0 = blocks.unpack_k_bits_bb(2)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.blocks_file_sink_0_1 = blocks.file_sink(gr.sizeof_gr_complex*1, 'iq_qpsk.txt', False)
-        self.blocks_file_sink_0_1.set_unbuffered(True)
-        self.blocks_file_sink_0_0_0 = blocks.file_sink(gr.sizeof_float*1, 'decoded_qpsk.txt', False)
-        self.blocks_file_sink_0_0_0.set_unbuffered(False)
-        self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, 'ground_truth_qpsk.txt', False)
-        self.blocks_file_sink_0_0.set_unbuffered(False)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, 'ber_qpsk.txt', False)
-        self.blocks_file_sink_0.set_unbuffered(True)
+        # self.blocks_file_sink_0_1 = blocks.file_sink(gr.sizeof_gr_complex*1, 'iq_qpsk.txt', False)
+        # self.blocks_file_sink_0_1.set_unbuffered(True)
+        # self.blocks_file_sink_0_0_0 = blocks.file_sink(gr.sizeof_float*1, 'decoded_qpsk.txt', False)
+        # self.blocks_file_sink_0_0_0.set_unbuffered(False)
+        # self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, 'ground_truth_qpsk.txt', False)
+        # self.blocks_file_sink_0_0.set_unbuffered(False)
+        # self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, 'ber_qpsk.txt', False)
+        # self.blocks_file_sink_0.set_unbuffered(True)
         self.blocks_delay_0_1 = blocks.delay(gr.sizeof_char*1, int(delay))
         self.blocks_delay_0 = blocks.delay(gr.sizeof_float*1, int(delay))
         self.blocks_char_to_float_0_0_0 = blocks.char_to_float(1, 1)
@@ -124,10 +125,10 @@ class mpsk_stage6(gr.top_block):
         ##################################################
         self.connect((self.analog_random_source_x_0, 0), (self.blocks_unpack_k_bits_bb_0_0, 0))
         self.connect((self.analog_random_source_x_0, 0), (self.digital_constellation_modulator_0, 0))
-        self.connect((self.blks2_error_rate, 0), (self.blocks_file_sink_0, 0))
-        self.connect((self.blocks_char_to_float_0_0, 0), (self.blocks_file_sink_0_0_0, 0))
+        # self.connect((self.blks2_error_rate, 0), (self.blocks_file_sink_0, 0))
+        # self.connect((self.blocks_char_to_float_0_0, 0), (self.blocks_file_sink_0_0_0, 0))
         self.connect((self.blocks_char_to_float_0_0_0, 0), (self.blocks_delay_0, 0))
-        self.connect((self.blocks_delay_0, 0), (self.blocks_file_sink_0_0, 0))
+        # self.connect((self.blocks_delay_0, 0), (self.blocks_file_sink_0_0, 0))
         self.connect((self.blocks_delay_0_1, 0), (self.blks2_error_rate, 1))
         self.connect((self.blocks_throttle_0, 0), (self.channels_channel_model_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blks2_error_rate, 0))
@@ -141,7 +142,7 @@ class mpsk_stage6(gr.top_block):
         self.connect((self.blocks_delay_0, 0), (self.raw_vector_sink, 0))
 
         self.connect((self.digital_cma_equalizer_cc_0, 0), (self.digital_costas_loop_cc_0, 0))
-        self.connect((self.digital_constellation_modulator_0, 0), (self.blocks_file_sink_0_1, 0))
+        # self.connect((self.digital_constellation_modulator_0, 0), (self.blocks_file_sink_0_1, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.tutorial_my_qpsk_demod_cb_1, 0))
         self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
@@ -269,52 +270,60 @@ def main(top_block_cls=mpsk_stage6, options=None):
     
 
 if __name__ == '__main__':
-    tb = mpsk_stage6()
-    print "start experiment "
-    snr = 18 
-    tb.set_noise_volt( 10**(-snr/10.))
-    tb.start()
-    sleep(10)
-    print "stopping"
-    tb.stop()
-    tb.wait()
-    print "writing data!"
-    x = numpy.array(tb.iq_vector_sink.data())
-    # numpy.savez_compressed('iq_data.npz', iq=x)
-    d = numpy.array(tb.decoded_vector_sink.data())
-    d_raw = numpy.array(tb.raw_vector_sink.data())
-    print "done!"
-    numpy.savez_compressed('all_raw.npz', iq=x, d=d, d_raw=d_raw)
+
+    parser = argparse.ArgumentParser(description='Chainer example: MNIST')
+    parser.add_argument('--num_syms', '-n', type=int, default=3,
+                        help='Number of symbols to demod at a Time')
+    args = parser.parse_args()
+
+    snrs = range(-18,10, 2) + range(10,20,2)
+
+    for snr in snrs:
+        tb = mpsk_stage6()
+        print "start experiment "
+        print "SNR: %d" % (snr)
+        tb.set_noise_volt( 10**(-snr/10.))
+        tb.start()
+        sleep(10)
+        print "Done"
+        tb.stop()
+        tb.wait()
+        print "writing data!"
+        x = numpy.array(tb.iq_vector_sink.data())
+        d = numpy.array(tb.decoded_vector_sink.data())
+        d_raw = numpy.array(tb.raw_vector_sink.data())
+        print "done!"
+        numpy.savez_compressed('gnu-data/all_%d_ntaps_%d.npz' % (snr, tb.taps.shape[0]), iq=x, d=d, d_raw=d_raw, snr=snr, taps=tb.taps)
 
 
-    d_raw = d_raw[:d.shape[0]]
-    start_idx = 83
-    syms_l_idx = 29
+        d_raw = d_raw[:d.shape[0]]
+        start_idx = 83
+        syms_l_idx = 29
 
-    np = numpy
+        np = numpy
 
-    tmp = d_raw.reshape(-1,2)
-    keys = np.unique(tmp, axis=0)
-    sym_l = np.zeros(tmp.shape[0])
-    for i, k in enumerate(keys):
-        sym_l[np.where((tmp == k).all(axis=1))] = i
+        tmp = d_raw.reshape(-1,2)
+        keys = np.unique(tmp, axis=0)
+        sym_l = np.zeros(tmp.shape[0])
+        for i, k in enumerate(keys):
+            sym_l[np.where((tmp == k).all(axis=1))] = i
 
-    # align iq and bits
-    sym_l = sym_l[syms_l_idx:]
-    x = x[start_idx:]
+        # align iq and bits
+        sym_l = sym_l[syms_l_idx:]
+        x = x[start_idx:]
 
-    sps = 4
-    symbols_per_window = 16 
-    wind_size = sps * symbols_per_window 
+        sps = 4
+        symbols_per_window = 16 
+        wind_size = sps * symbols_per_window 
 
-    idx = np.arange(0, wind_size)
+        idx = np.arange(0, wind_size)
 
-    x_patched = x[np.array([idx + i for i in range(0, len(x)-wind_size, wind_size)])]
+        x_patched = x[np.array([idx + i for i in range(0, len(x)-wind_size, wind_size)])]
 
 
-    idx = np.arange(0, symbols_per_window)
-    # syms_patched = sym_l[np.array([idx + i for i in range(0, len(sym_l)-(wind_size/sym_len)+1, 1)])]
-    syms_patched = sym_l[np.array([idx + i for i in range(0, len(sym_l)-symbols_per_window, symbols_per_window)])]
+        idx = np.arange(0, symbols_per_window)
+        # syms_patched = sym_l[np.array([idx + i for i in range(0, len(sym_l)-(wind_size/sym_len)+1, 1)])]
+        syms_patched = sym_l[np.array([idx + i for i in range(0, len(sym_l)-symbols_per_window, symbols_per_window)])]
 
-    x_patched = x_patched[:syms_patched.shape[0],:] 
-    np.savez_compressed("../data_gen/data/newSim_%s_%d.npz" % ("QPSK",snr), x=x_patched, y=syms_patched)
+        x_patched = x_patched[:syms_patched.shape[0],:] 
+        np.savez_compressed("../data_gen/data/newSim_%s_%d.npz" % ("QPSK",snr), x=x_patched, y=syms_patched)
