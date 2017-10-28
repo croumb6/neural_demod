@@ -288,7 +288,7 @@ if __name__ == '__main__':
                         help='Sim Run Time')
     args = parser.parse_args()
 
-    snrs = range(-8,6, 2)# + range(10,20,2)
+    snrs = range(-18,20, 1)# + range(10,20,2)
 
     for snr in snrs:
         tb = mpsk_stage6()

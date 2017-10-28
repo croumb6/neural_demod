@@ -15,13 +15,10 @@ class DemodSNRDataset(dataset_mixin.DatasetMixin):
         xs_complex_l = []
         ys_l = []
 
-        data_size = 3000 
+        data_size = 5000 
         ntaps = 4
 
         for s in snr:
-            # data = np.load("../data_gen/data/newchan_QPSK_%d.npz" % (s))
-            # data = np.load("../data_gen/data/nooverlapQPSK_%d.npz" % (s))
-            # data = np.load("../data_gen/data/4taps_standQPSK_%d.npz" % (s))
             data = np.load("../data_gen/data/newSim_QPSK_%d.npz" % (s))
             xs_complex = data['x']
             # xs_complex = xs_complex/np.sum((np.abs(xs_complex)), axis=1)[:,np.newaxis]
@@ -43,9 +40,9 @@ class DemodSNRDataset(dataset_mixin.DatasetMixin):
         self.xs = self.xs.reshape(self.xs.shape[0], 1, self.xs.shape[1], self.xs.shape[2])
 
         #ys = data['y'][:data_size,:num_syms]
-        keys = np.unique(ys[:,:num_syms], axis=0)
+        self.keys = np.unique(ys[:,:num_syms], axis=0)
         sym_l = np.zeros(ys.shape[0])
-        for i, k in enumerate(keys):
+        for i, k in enumerate(self.keys):
             sym_l[np.where((ys == k).all(axis=1))] = i
         self.ys = sym_l
         print "num classes: %d" % (np.unique(self.ys).shape)
