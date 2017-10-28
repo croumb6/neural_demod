@@ -49,7 +49,7 @@ if not os.path.exists(results_output_dir):
     os.makedirs(results_output_dir)
 record_setting(results_output_dir)
 
-snr = range(-10,20, 2)  
+snr = range(-8,6,2)
 print snr
 num_syms = args.num_syms 
 data_train = DemodSNRDataset(test=False, snr=snr, num_syms=num_syms)
